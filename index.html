@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小米智能家居AI大脑</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🏠</span>
+                <h1>小米智能家居AI大脑</h1>
+                <span class="badge">AI Powered</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#devices">设备</a></li>
+                    <li><a href="#scenes">场景</a></li>
+                    <li><a href="#voice">语音控制</a></li>
+                    <li><a href="#energy">能耗</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="dashboard">
+        <div class="container">
+            <h2>智能家居Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="total-devices">-</h3>
+                    <p>设备总数</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="active-devices">-</h3>
+                    <p>正在运行</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="scenes-count">-</h3>
+                    <p>场景数量</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="energy-today">-</h3>
+                    <p>今日耗电(kWh)</p>
+                </div>
+            </div>
+            <button class="btn-secondary" onclick="refreshDashboard()">🔄 刷新数据</button>
+        </div>
+    </section>
+
+    <section id="devices">
+        <div class="container">
+            <h2>设备管理</h2>
+            <div class="devices-grid" id="devices-grid"></div>
+        </div>
+    </section>
+
+    <section id="scenes">
+        <div class="container">
+            <h2>智能场景</h2>
+            <div class="scenes-grid" id="scenes-grid"></div>
+        </div>
+    </section>
+
+    <section id="voice">
+        <div class="container">
+            <h2>语音/自然语言控制</h2>
+            <div class="voice-container">
+                <div class="voice-history" id="voice-history">
+                    <div class="voice-message system">
+                        <p>你好！我是智能家居AI助手。你可以用自然语言控制设备，例如：</p>
+                        <ul>
+                            <li>"打开客厅灯"</li>
+                            <li>"关闭空调"</li>
+                            <li>"打开回家模式"</li>
+                            <li>"查看用电情况"</li>
+                            <li>"给我一些节能建议"</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="voice-input">
+                    <input type="text" id="voice-command" placeholder="输入你的指令..." onkeypress="handleVoiceKeypress(event)">
+                    <button class="btn-send" onclick="sendVoiceCommand()">发送</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="energy">
+        <div class="container">
+            <h2>能耗分析</h2>
+            <div class="energy-container">
+                <div class="energy-summary">
+                    <div class="energy-item">
+                        <h3 id="total-energy">-</h3>
+                        <p>总用电(kWh)</p>
+                    </div>
+                    <div class="energy-item">
+                        <h3 id="total-cost">-</h3>
+                        <p>预计费用(元)</p>
+                    </div>
+                </div>
+                <div class="device-energy" id="device-energy"></div>
+                <div class="energy-suggestions">
+                    <h3>💡 节能建议</h3>
+                    <div id="suggestions-list"></div>
+                </div>
+                <button class="btn-secondary" onclick="refreshEnergy()">🔄 刷新能耗</button>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 小米智能家居AI大脑 | Powered by Xiaomi AI</p>
+        </div>
+    </footer>
+
+    <script src="static/js/app.js"></script>
+</body>
+</html>
