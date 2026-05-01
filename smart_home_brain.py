@@ -9,6 +9,9 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass, asdict, field
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Mood(Enum):
@@ -305,7 +308,18 @@ class AIConversationEngine:
 
     def analyze_emotion(self, text: str) -> Optional[Mood]:
         text = text.lower()
-        for mood, keywords in self.emotion_keywords.items():
+
+        # 优先匹配长关键词和多词组合
+        priority_order = [
+            (Mood.TIRED, ["好累啊", "好累", "累死了", "累", "疲惫", "辛苦", "困", "乏", "没精神"]),
+            (Mood.STRESSED, ["压力大", "压力", "烦", "焦虑", "紧张", "担心", "头痛", "忙"]),
+            (Mood.HOT, ["太热了", "好热", "热", "出汗", "闷", "温度高"]),
+            (Mood.COLD, ["太冷了", "好冷", "冷", "冻", "温度低"]),
+            (Mood.HUNGRY, ["肚子饿", "饿了", "饿", "想吃", "没吃饭"]),
+            (Mood.HAPPY, ["太开心了", "好开心", "开心", "高兴", "棒", "喜欢", "爱", "满意", "舒服", "不错"]),
+        ]
+
+        for mood, keywords in priority_order:
             for keyword in keywords:
                 if keyword in text:
                     return mood
@@ -316,9 +330,34 @@ class AIConversationEngine:
             "wants_device_control": False,
             "device_type": None,
             "action": None,
+            "wants_scene": False,
+            "scene_name": None,
             "time_mentioned": None,
             "emotion": None,
         }
+
+        scene_map = {
+            "回家模式": "回家模式",
+            "离家模式": "离家模式",
+            "睡眠模式": "睡眠模式",
+            "观影模式": "观影模式",
+            "回家": "回家模式",
+            "离家": "离家模式",
+            "睡觉": "睡眠模式",
+            "睡觉模式": "睡眠模式",
+            "睡眠": "睡眠模式",
+            "看电影": "观影模式",
+            "看电影模式": "观影模式",
+        }
+
+        for keyword, scene_name in scene_map.items():
+            if keyword in text:
+                intentions["wants_scene"] = True
+                intentions["scene_name"] = scene_name
+                break
+
+        if intentions["wants_scene"]:
+            return intentions
 
         device_map = {
             "灯": "客厅主灯",
@@ -361,10 +400,19 @@ class AIConversationEngine:
             "emotion_detected": emotion.value if emotion else None,
             "suggestions": [],
             "device_actions": [],
+            "scene_actions": [],
             "follow_up_questions": [],
             "memory_updated": False,
             "knowledge_result": None
         }
+
+        if intentions["wants_scene"]:
+            response["scene_actions"].append({
+                "scene_name": intentions["scene_name"],
+                "auto_execute": True
+            })
+            response["message"] = f"好的！帮你打开【{intentions['scene_name']}】~"
+            return response
 
         is_knowledge_query = any(kw in user_input for kw in self.knowledge_triggers)
 
@@ -622,6 +670,13 @@ class SmartHomeBrain:
 
     def process_conversation(self, user_input: str) -> Dict:
         result = self.conversation_engine.generate_response(user_input)
+
+        if result.get("scene_actions"):
+            for action in result["scene_actions"]:
+                scene_result = self.execute_scene(action["scene_name"])
+                if scene_result["success"]:
+                    result["executed_actions"] = result.get("executed_actions", [])
+                    result["executed_actions"].append(scene_result)
 
         if result.get("device_actions"):
             for action in result["device_actions"]:

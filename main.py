@@ -4,14 +4,17 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+import asyncio
 
 from smart_home_brain import SmartHomeBrain
+from llm_integration import LLMRouter
 
-app = FastAPI(title="小米智能家居AI大脑", version="2.0.0")
+app = FastAPI(title="小米智能家居AI大脑", version="3.0.0")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 brain = SmartHomeBrain()
+llm = LLMRouter()
 
 class ChatMessage(BaseModel):
     message: str
@@ -31,6 +34,10 @@ class UserProfile(BaseModel):
     name: str
     work_schedule: Optional[str] = None
 
+class LLMChatRequest(BaseModel):
+    message: str
+    model: Optional[str] = None
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("index.html", "r", encoding="utf-8") as f:
@@ -39,11 +46,16 @@ async def index():
 @app.post("/api/chat")
 async def chat(request: ChatMessage):
     result = brain.process_conversation(request.message)
+    if result.get("knowledge_result") or result.get("scene_actions") or result.get("device_actions"):
+        return result
+    llm_result = await llm.chat(request.message)
+    result["message"] = llm_result["message"]
+    result["model_used"] = llm_result["model"]
     return result
 
-@app.post("/api/knowledge")
-async def knowledge(request: KnowledgeQuery):
-    result = brain.conversation_engine.knowledge_engine.search_knowledge(request.query)
+@app.post("/api/chat/llm")
+async def chat_llm(request: LLMChatRequest):
+    result = await llm.chat(request.message, request.model)
     return result
 
 @app.post("/api/control")
@@ -99,7 +111,7 @@ async def get_context():
 async def health():
     return {
         "status": "healthy",
-        "service": "小米智能家居AI大脑",
+        "service": "智能家居AI大脑",            
         "version": "2.0.0",
         "features": ["情感识别", "主动关怀", "记忆学习", "情境感知"]
     }
@@ -107,3 +119,4 @@ async def health():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    

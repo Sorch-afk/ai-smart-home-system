@@ -79,28 +79,43 @@ function handleChatResponse(data) {
     if (data.emotion_detected) {
         document.getElementById('emotion-indicator').textContent = `情感: ${data.emotion_detected}`;
         document.getElementById('emotion-indicator').style.background = '#FF6900';
+    } else {
+        document.getElementById('emotion-indicator').textContent = '';
+        document.getElementById('emotion-indicator').style.background = '#2a2a35';
+    }
+
+    const modelBadge = document.getElementById('model-badge');
+    if (data.model_used) {
+        const modelNames = {qwen: '通义千问', mimo: '小米Mimo', local: '本地模式'};
+        modelBadge.textContent = `AI: ${modelNames[data.model_used] || data.model_used}`;
+        modelBadge.style.display = 'block';
     }
 
     if (data.knowledge_result) {
-        const source = data.knowledge_result.source === 'online' ? '🌐 网络搜索' : '📚 知识库';
+        const source = data.knowledge_result.source === 'online' ? '🌐 网络搜索' : ' 知识库';
         responseText += `\n\n---\n${source}`;
     }
 
     if (data.executed_actions && data.executed_actions.length > 0) {
         responseText += '\n\n✅ 已执行：';
         data.executed_actions.forEach(action => {
-            responseText += `\n• ${action.message}`;
+            if (action.scene_name) {
+                responseText += `\n•  ${action.message}`;
+            } else {
+                responseText += `\n• ${action.message}`;
+            }
         });
     }
 
     if (data.suggestions && data.suggestions.length > 0) {
-        responseText += '\n\n💡 建议：';
+        responseText += '\n\n 建议：';
         data.suggestions.forEach(s => {
             responseText += `\n• ${s}`;
         });
     }
 
     addAIMessage(responseText);
+    refreshSidebar();
 }
 
 function quickChat(message) {
