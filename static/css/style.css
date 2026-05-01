@@ -26,6 +26,7 @@ header .container { display: flex; justify-content: space-between; align-items: 
     font-size: 1.5rem;
     background: linear-gradient(135deg, #FF6900, #FF9800);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -67,6 +68,7 @@ h2 { text-align: center; font-size: 2.2rem; margin-bottom: 40px; color: white; }
     font-size: 2rem;
     background: linear-gradient(135deg, #FF6900, #FF9800);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 15px;
 }

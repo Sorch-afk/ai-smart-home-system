@@ -1,4 +1,4 @@
-# 小米智能家居AI大脑 - 情感化AI管家
+# 智能家居AI大脑 - 情感化AI管家
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
@@ -6,7 +6,7 @@
 
 ## 项目简介
 
-**小米智能家居AI大脑** 是一个具有情感化交互能力的智能家居AI管家系统。不同于传统的指令式控制，这个系统能够：
+**智能家居AI大脑** 是一个具有情感化交互能力的智能家居AI管家系统。不同于传统的指令式控制，这个系统能够：
 
 - **主动关心主人** - 回家时自动问候，每天问候语不重样
 - **情感识别** - 从对话中感知你的情绪（开心、疲惫、热、冷、饿...）
