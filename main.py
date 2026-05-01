@@ -1,100 +1,99 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
-import json
 
-from smart_home_brain import SmartHomeBrain, DeviceType
+from smart_home_brain import SmartHomeBrain
 
-app = FastAPI(title="Xiaomi Smart Home AI Brain", version="1.0.0")
+app = FastAPI(title="小米智能家居AI大脑", version="2.0.0")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 brain = SmartHomeBrain()
 
-class DeviceControlRequest(BaseModel):
+class ChatMessage(BaseModel):
+    message: str
+
+class DeviceControl(BaseModel):
     device_name: str
     action: str
     params: dict = {}
 
-class SceneRequest(BaseModel):
+class SceneExecute(BaseModel):
     scene_name: str
 
-class CommandRequest(BaseModel):
-    command: str
-
-class SceneCreateRequest(BaseModel):
+class UserProfile(BaseModel):
     name: str
-    actions: list
+    work_schedule: Optional[str] = None
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root():
+async def index():
     with open("index.html", "r", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/api/status")
-async def get_status():
-    return brain.get_status()
+@app.post("/api/chat")
+async def chat(request: ChatMessage):
+    result = brain.process_conversation(request.message)
+    return result
 
 @app.post("/api/control")
-async def control_device(request: DeviceControlRequest):
-    result = brain.control_device(request.device_name, request.action, request.params)
-    return result
+async def control(request: DeviceControl):
+    return brain.control_device(request.device_name, request.action, request.params)
 
-@app.post("/api/scene/execute")
-async def execute_scene(request: SceneRequest):
-    result = brain.execute_scene(request.scene_name)
-    return result
+@app.post("/api/scene")
+async def execute_scene(request: SceneExecute):
+    return brain.execute_scene(request.scene_name)
 
-@app.post("/api/scene/create")
-async def create_scene(request: SceneCreateRequest):
-    brain.create_scene(request.name, request.actions)
-    return {"success": True, "message": f"场景 {request.name} 创建成功"}
+@app.get("/api/status")
+async def status():
+    return brain.get_status()
 
-@app.post("/api/command")
-async def natural_language_command(request: CommandRequest):
-    result = brain.natural_language_command(request.command)
-    return result
+@app.get("/api/devices")
+async def devices():
+    devices_list = []
+    for name, device in brain.devices.items():
+        devices_list.append(device)
+    return {"devices": devices_list}
+
+@app.get("/api/scenes")
+async def scenes():
+    return {"scenes": list(brain.scenes.values())}
+
+@app.get("/api/greeting")
+async def greeting():
+    hour = datetime.now().hour
+    return {"greeting": brain.get_daily_greeting(hour)}
+
+@app.get("/api/home-event")
+async def home_event(weather: Optional[str] = None):
+    return brain.trigger_home_event(weather)
 
 @app.get("/api/energy")
-async def get_energy():
+async def energy():
     return brain.calculate_energy()
 
 @app.get("/api/energy/suggestions")
-async def get_energy_suggestions():
-    suggestions = brain.get_energy_suggestions()
-    return {"suggestions": suggestions}
+async def energy_suggestions():
+    return {"suggestions": brain.get_energy_suggestions()}
 
-@app.get("/api/devices")
-async def get_devices():
-    devices = []
-    for name, device in brain.devices.items():
-        devices.append({
-            "name": device.name,
-            "type": device.device_type.value,
-            "room": device.room,
-            "is_on": device.is_on,
-            "power_w": device.power_w,
-            "brightness": device.brightness,
-            "temperature": device.temperature,
-            "fan_speed": device.fan_speed
-        })
-    return {"devices": devices}
+@app.post("/api/set-user")
+async def set_user(profile: UserProfile):
+    brain.set_user_profile(profile.name, profile.work_schedule)
+    return {"success": True, "message": f"你好，{profile.name}！我已经记住你了~"}
 
-@app.get("/api/scenes")
-async def get_scenes():
-    return {"scenes": list(brain.scenes.keys())}
+@app.get("/api/context")
+async def get_context():
+    return brain.conversation_engine.get_conversation_context()
 
 @app.get("/api/health")
-async def health_check():
+async def health():
     return {
         "status": "healthy",
-        "service": "Xiaomi Smart Home AI Brain",
-        "version": "1.0.0",
-        "devices_count": len(brain.devices),
-        "active_devices": sum(1 for d in brain.devices.values() if d.is_on)
+        "service": "小米智能家居AI大脑",
+        "version": "2.0.0",
+        "features": ["情感识别", "主动关怀", "记忆学习", "情境感知"]
     }
 
 if __name__ == "__main__":

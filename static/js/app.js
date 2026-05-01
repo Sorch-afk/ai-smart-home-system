@@ -1,22 +1,134 @@
+let userName = localStorage.getItem('userName') || null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    refreshDashboard();
+    if (userName) {
+        showWelcomeBack();
+    }
+    loadInitialGreeting();
     loadDevices();
     loadScenes();
-    refreshEnergy();
+    loadSidebar();
 });
 
-async function refreshDashboard() {
+async function loadInitialGreeting() {
     try {
-        const status = await fetch('/api/status').then(r => r.json());
-        document.getElementById('total-devices').textContent = status.total_devices;
-        document.getElementById('active-devices').textContent = status.active_devices;
-        document.getElementById('scenes-count').textContent = status.scenes.length;
-
-        const energy = await fetch('/api/energy').then(r => r.json());
-        document.getElementById('energy-today').textContent = energy.total_energy_kwh;
+        const response = await fetch('/api/greeting');
+        const data = await response.json();
+        if (data.greeting) {
+            document.getElementById('greeting-text').textContent = data.greeting;
+        }
     } catch (error) {
-        console.error('Failed to refresh dashboard:', error);
+        console.error('Failed to load greeting:', error);
     }
+}
+
+function showWelcomeBack() {
+    document.getElementById('user-setup').style.display = 'none';
+    document.getElementById('greeting-text').textContent = `欢迎回来，${userName}！`;
+    addAIMessage(`嗨，${userName}！想我了吗？今天过得怎么样呀？😊`);
+}
+
+async function setUserName() {
+    const nameInput = document.getElementById('user-name');
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    userName = name;
+    localStorage.setItem('userName', name);
+
+    try {
+        await fetch('/api/set-user', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name})
+        });
+    } catch (error) {
+        console.error('Failed to set user:', error);
+    }
+
+    document.getElementById('user-setup').style.display = 'none';
+    document.getElementById('greeting-text').textContent = `你好，${name}！`;
+    addAIMessage(`你好呀，${name}！我是你的AI管家，以后就让我来照顾你吧！有什么需要随时告诉我哦~ 😊`);
+}
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    input.value = '';
+    addUserMessage(message);
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: message})
+        });
+        const data = await response.json();
+        handleChatResponse(data);
+        refreshSidebar();
+    } catch (error) {
+        addAIMessage('抱歉，我现在有点忙，请稍后再试~');
+    }
+}
+
+function handleChatResponse(data) {
+    let responseText = data.message || '';
+
+    if (data.emotion_detected) {
+        document.getElementById('emotion-indicator').textContent = `情感: ${data.emotion_detected}`;
+        document.getElementById('emotion-indicator').style.background = '#FF6900';
+    }
+
+    if (data.executed_actions && data.executed_actions.length > 0) {
+        responseText += '\n\n✅ 已执行：';
+        data.executed_actions.forEach(action => {
+            responseText += `\n• ${action.message}`;
+        });
+    }
+
+    if (data.suggestions && data.suggestions.length > 0) {
+        responseText += '\n\n💡 建议：';
+        data.suggestions.forEach(s => {
+            responseText += `\n• ${s}`;
+        });
+    }
+
+    addAIMessage(responseText);
+}
+
+function quickChat(message) {
+    document.getElementById('chat-input').value = message;
+    sendChat();
+}
+
+function handleChatKeypress(event) {
+    if (event.key === 'Enter') sendChat();
+}
+
+function addUserMessage(text) {
+    const container = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message user';
+    messageDiv.innerHTML = `
+        <div class="message-avatar">👤</div>
+        <div class="message-content"><p>${escapeHtml(text)}</p></div>
+    `;
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function addAIMessage(text) {
+    const container = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message ai';
+    messageDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-content"><p>${formatMessage(text)}</p></div>
+    `;
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
 }
 
 async function loadDevices() {
@@ -26,16 +138,7 @@ async function loadDevices() {
         const grid = document.getElementById('devices-grid');
         grid.innerHTML = '';
 
-        const icons = {
-            'light': '💡',
-            'air_conditioner': '❄️',
-            'fan': '🌀',
-            'tv': '📺',
-            'curtain': '🪟',
-            'door_lock': '🔒',
-            'camera': '📷',
-            'sensor': '🌡️'
-        };
+        const icons = {'light': '💡', 'air_conditioner': '❄️', 'fan': '🌀', 'tv': '📺', 'curtain': '🪟', 'door_lock': '🔒', 'camera': '📷', 'sensor': '🌡️'};
 
         data.devices.forEach(device => {
             const card = document.createElement('div');
@@ -43,9 +146,7 @@ async function loadDevices() {
             card.innerHTML = `
                 <div class="device-header">
                     <div class="device-icon">${icons[device.type] || '📱'}</div>
-                    <div class="device-status ${device.is_on ? 'on' : 'off'}">
-                        ${device.is_on ? '运行中' : '已关闭'}
-                    </div>
+                    <div class="device-status ${device.is_on ? 'on' : 'off'}">${device.is_on ? '运行中' : '已关闭'}</div>
                 </div>
                 <div class="device-info">
                     <h3>${device.name}</h3>
@@ -74,9 +175,9 @@ async function controlDevice(deviceName, action) {
         });
         const result = await response.json();
         if (result.success) {
-            alert(result.message);
+            addAIMessage(`✅ ${result.message}`);
             loadDevices();
-            refreshDashboard();
+            loadSidebar();
         }
     } catch (error) {
         console.error('Failed to control device:', error);
@@ -90,21 +191,13 @@ async function loadScenes() {
         const grid = document.getElementById('scenes-grid');
         grid.innerHTML = '';
 
-        const sceneIcons = {
-            '回家模式': '🏠',
-            '离家模式': '🚪',
-            '睡眠模式': '🌙'
-        };
-
         data.scenes.forEach(scene => {
             const card = document.createElement('div');
             card.className = 'scene-card';
             card.innerHTML = `
-                <h3>${sceneIcons[scene] || '🎬'} ${scene}</h3>
-                <div class="scene-actions">
-                    点击执行此场景
-                </div>
-                <button class="scene-btn" onclick="executeScene('${scene}')">执行场景</button>
+                <h3>${scene.icon || '🎬'} ${Object.keys(scene)[0] === 'icon' ? '场景' : '场景'}</h3>
+                <p>${scene.description || '智能场景'}</p>
+                <button class="scene-btn" onclick="executeScene('${scene.name || Object.keys(scene)[0]}')">执行</button>
             `;
             grid.appendChild(card);
         });
@@ -115,117 +208,57 @@ async function loadScenes() {
 
 async function executeScene(sceneName) {
     try {
-        const response = await fetch('/api/scene/execute', {
+        const response = await fetch('/api/scene', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({scene_name: sceneName})
         });
         const result = await response.json();
         if (result.success) {
-            alert(result.message);
-            refreshDashboard();
+            addAIMessage(`✅ ${result.message}`);
+            loadSidebar();
         }
     } catch (error) {
         console.error('Failed to execute scene:', error);
     }
 }
 
-async function sendVoiceCommand() {
-    const input = document.getElementById('voice-command');
-    const command = input.value.trim();
-    if (!command) return;
-
-    const history = document.getElementById('voice-history');
-
-    const userMsg = document.createElement('div');
-    userMsg.className = 'voice-message user';
-    userMsg.innerHTML = `<p>${escapeHtml(command)}</p>`;
-    history.appendChild(userMsg);
-
-    input.value = '';
-    history.scrollTop = history.scrollHeight;
-
+async function loadSidebar() {
     try {
-        const response = await fetch('/api/command', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({command: command})
-        });
-        const result = await response.json();
+        const status = await fetch('/api/status').then(r => r.json());
+        const deviceList = document.getElementById('device-status-list');
+        deviceList.innerHTML = '';
 
-        const systemMsg = document.createElement('div');
-        systemMsg.className = 'voice-message system';
-
-        if (result.success) {
-            if (result.message) {
-                systemMsg.innerHTML = `<p>${result.message}</p>`;
-            } else if (result.energy) {
-                systemMsg.innerHTML = `
-                    <p>📊 能耗统计：</p>
-                    <p>总用电: ${result.energy.total_energy_kwh} kWh</p>
-                    <p>预计费用: ¥${result.energy.total_cost}</p>
-                `;
-            } else if (result.suggestions) {
-                systemMsg.innerHTML = `
-                    <p>💡 节能建议：</p>
-                    <ul>
-                        ${result.suggestions.map(s => `<li>${s}</li>`).join('')}
-                    </ul>
-                `;
-            } else if (result.status) {
-                systemMsg.innerHTML = `
-                    <p>📱 设备状态：</p>
-                    <p>总设备: ${result.status.total_devices}</p>
-                    <p>运行中: ${result.status.active_devices}</p>
-                `;
-            }
-        } else {
-            systemMsg.innerHTML = `<p style="color: #FF5252;">${result.message}</p>`;
-        }
-
-        history.appendChild(systemMsg);
-        history.scrollTop = history.scrollHeight;
-    } catch (error) {
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'voice-message system';
-        errorMsg.innerHTML = `<p style="color: #FF5252;">请求失败: ${error.message}</p>`;
-        history.appendChild(errorMsg);
-    }
-}
-
-function handleVoiceKeypress(event) {
-    if (event.key === 'Enter') {
-        sendVoiceCommand();
-    }
-}
-
-async function refreshEnergy() {
-    try {
-        const energy = await fetch('/api/energy').then(r => r.json());
-        document.getElementById('total-energy').textContent = energy.total_energy_kwh;
-        document.getElementById('total-cost').textContent = '¥' + energy.total_cost;
-
-        const deviceContainer = document.getElementById('device-energy');
-        deviceContainer.innerHTML = '<h3>设备耗电详情</h3>';
-
-        for (const [name, data] of Object.entries(energy.device_details)) {
-            deviceContainer.innerHTML += `
-                <div class="energy-device">
-                    <span>${name}</span>
-                    <span>${data.energy_kwh} kWh | ¥${data.estimated_cost}</span>
+        status.devices.slice(0, 5).forEach(device => {
+            deviceList.innerHTML += `
+                <div class="device-mini">
+                    <span>${device.icon || '📱'} ${device.name}</span>
+                    <span class="device-status ${device.is_on ? 'on' : 'off'}">${device.is_on ? '开' : '关'}</span>
                 </div>
             `;
-        }
+        });
 
-        const suggestions = await fetch('/api/energy/suggestions').then(r => r.json());
-        const suggestionsList = document.getElementById('suggestions-list');
-        suggestionsList.innerHTML = '';
-        suggestions.suggestions.forEach(s => {
-            suggestionsList.innerHTML += `<div class="suggestion">${s}</div>`;
+        const scenesList = document.getElementById('quick-scenes');
+        scenesList.innerHTML = '';
+        status.scenes.forEach(scene => {
+            scenesList.innerHTML += `
+                <div class="scene-mini" onclick="executeScene('${scene}')">
+                    🎬 ${scene}
+                </div>
+            `;
         });
     } catch (error) {
-        console.error('Failed to refresh energy:', error);
+        console.error('Failed to load sidebar:', error);
     }
+}
+
+function refreshSidebar() {
+    loadSidebar();
+    loadDevices();
+}
+
+function formatMessage(text) {
+    return text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 }
 
 function escapeHtml(text) {

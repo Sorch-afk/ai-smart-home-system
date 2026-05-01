@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小米智能家居AI大脑</title>
+    <title>小米智能家居AI大脑 - 情感化AI管家</title>
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
@@ -12,42 +12,66 @@
             <div class="logo">
                 <span class="logo-icon">🏠</span>
                 <h1>小米智能家居AI大脑</h1>
-                <span class="badge">AI Powered</span>
+                <span class="badge">AI管家</span>
             </div>
             <nav>
                 <ul>
-                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#chat">AI对话</a></li>
                     <li><a href="#devices">设备</a></li>
                     <li><a href="#scenes">场景</a></li>
-                    <li><a href="#voice">语音控制</a></li>
                     <li><a href="#energy">能耗</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <section id="dashboard">
+    <section id="welcome" class="welcome-section">
         <div class="container">
-            <h2>智能家居Dashboard</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3 id="total-devices">-</h3>
-                    <p>设备总数</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="active-devices">-</h3>
-                    <p>正在运行</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="scenes-count">-</h3>
-                    <p>场景数量</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="energy-today">-</h3>
-                    <p>今日耗电(kWh)</p>
+            <div class="welcome-card">
+                <div class="welcome-icon">🏠</div>
+                <h2 id="greeting-text">欢迎使用小米智能家居AI大脑</h2>
+                <p id="greeting-sub">你的AI私人管家，懂你也关心你</p>
+                <div class="user-setup" id="user-setup">
+                    <input type="text" id="user-name" placeholder="你的名字是？" />
+                    <button class="btn-primary" onclick="setUserName()">开始体验</button>
                 </div>
             </div>
-            <button class="btn-secondary" onclick="refreshDashboard()">🔄 刷新数据</button>
+        </div>
+    </section>
+
+    <section id="chat">
+        <div class="container">
+            <div class="chat-layout">
+                <div class="chat-main">
+                    <div class="chat-header">
+                        <h3>💬 AI管家对话</h3>
+                        <span id="emotion-indicator" class="emotion-badge"></span>
+                    </div>
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input-container">
+                        <div class="quick-actions">
+                            <button class="quick-btn" onclick="quickChat('我回来了')">🏠 我回来了</button>
+                            <button class="quick-btn" onclick="quickChat('今天好热啊')">🌡️ 今天好热</button>
+                            <button class="quick-btn" onclick="quickChat('好累啊')">😴 好累</button>
+                            <button class="quick-btn" onclick="quickChat('打开回家模式')">🎬 回家模式</button>
+                        </div>
+                        <div class="input-row">
+                            <input type="text" id="chat-input" placeholder="和AI管家聊聊吧..." onkeypress="handleChatKeypress(event)">
+                            <button class="btn-send" onclick="sendChat()">发送</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-sidebar">
+                    <div class="sidebar-card">
+                        <h4>📊 设备状态</h4>
+                        <div id="device-status-list"></div>
+                    </div>
+                    <div class="sidebar-card">
+                        <h4>🎯 快捷场景</h4>
+                        <div id="quick-scenes"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -62,30 +86,6 @@
         <div class="container">
             <h2>智能场景</h2>
             <div class="scenes-grid" id="scenes-grid"></div>
-        </div>
-    </section>
-
-    <section id="voice">
-        <div class="container">
-            <h2>语音/自然语言控制</h2>
-            <div class="voice-container">
-                <div class="voice-history" id="voice-history">
-                    <div class="voice-message system">
-                        <p>你好！我是智能家居AI助手。你可以用自然语言控制设备，例如：</p>
-                        <ul>
-                            <li>"打开客厅灯"</li>
-                            <li>"关闭空调"</li>
-                            <li>"打开回家模式"</li>
-                            <li>"查看用电情况"</li>
-                            <li>"给我一些节能建议"</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="voice-input">
-                    <input type="text" id="voice-command" placeholder="输入你的指令..." onkeypress="handleVoiceKeypress(event)">
-                    <button class="btn-send" onclick="sendVoiceCommand()">发送</button>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -108,14 +108,13 @@
                     <h3>💡 节能建议</h3>
                     <div id="suggestions-list"></div>
                 </div>
-                <button class="btn-secondary" onclick="refreshEnergy()">🔄 刷新能耗</button>
             </div>
         </div>
     </section>
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 小米智能家居AI大脑 | Powered by Xiaomi AI</p>
+            <p>&copy; 2024 小米智能家居AI大脑 | 情感化AI管家系统</p>
         </div>
     </footer>
 
