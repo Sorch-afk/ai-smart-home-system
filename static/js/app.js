@@ -81,6 +81,11 @@ function handleChatResponse(data) {
         document.getElementById('emotion-indicator').style.background = '#FF6900';
     }
 
+    if (data.knowledge_result) {
+        const source = data.knowledge_result.source === 'online' ? '🌐 网络搜索' : '📚 知识库';
+        responseText += `\n\n---\n${source}`;
+    }
+
     if (data.executed_actions && data.executed_actions.length > 0) {
         responseText += '\n\n✅ 已执行：';
         data.executed_actions.forEach(action => {

@@ -50,11 +50,19 @@
                     <div class="chat-messages" id="chat-messages"></div>
                     <div class="chat-input-container">
                         <div class="quick-actions">
-                            <button class="quick-btn" onclick="quickChat('我回来了')">🏠 我回来了</button>
-                            <button class="quick-btn" onclick="quickChat('今天好热啊')">🌡️ 今天好热</button>
-                            <button class="quick-btn" onclick="quickChat('好累啊')">😴 好累</button>
-                            <button class="quick-btn" onclick="quickChat('打开回家模式')">🎬 回家模式</button>
-                        </div>
+                        <button class="quick-btn" onclick="quickChat('我回来了')">🏠 我回来了</button>
+                        <button class="quick-btn" onclick="quickChat('今天好热啊')">🌡️ 今天好热</button>
+                        <button class="quick-btn" onclick="quickChat('好累啊')">😴 好累</button>
+                        <button class="quick-btn" onclick="quickChat('打开回家模式')">🎬 回家模式</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickChat('今天天气怎么样')">🌤️ 天气</button>
+                        <button class="quick-btn" onclick="quickChat('推荐今天的食谱')">🍜 食谱</button>
+                        <button class="quick-btn" onclick="quickChat('有什么健康小贴士')">💪 健康</button>
+                        <button class="quick-btn" onclick="quickChat('给我讲个笑话')">😂 笑话</button>
+                        <button class="quick-btn" onclick="quickChat('今天有什么新闻')">📰 新闻</button>
+                        <button class="quick-btn" onclick="quickChat('推荐几部电影')">🎬 电影</button>
+                    </div>
                         <div class="input-row">
                             <input type="text" id="chat-input" placeholder="和AI管家聊聊吧..." onkeypress="handleChatKeypress(event)">
                             <button class="btn-send" onclick="sendChat()">发送</button>

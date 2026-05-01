@@ -16,6 +16,9 @@ brain = SmartHomeBrain()
 class ChatMessage(BaseModel):
     message: str
 
+class KnowledgeQuery(BaseModel):
+    query: str
+
 class DeviceControl(BaseModel):
     device_name: str
     action: str
@@ -36,6 +39,11 @@ async def index():
 @app.post("/api/chat")
 async def chat(request: ChatMessage):
     result = brain.process_conversation(request.message)
+    return result
+
+@app.post("/api/knowledge")
+async def knowledge(request: KnowledgeQuery):
+    result = brain.conversation_engine.knowledge_engine.search_knowledge(request.query)
     return result
 
 @app.post("/api/control")

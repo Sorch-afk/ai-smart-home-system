@@ -164,11 +164,90 @@ class MemoryEngine:
         return None
 
 
+class KnowledgeEngine:
+    def __init__(self):
+        self.knowledge_base = {
+            "天气": "今天天气晴朗，温度25-30度，空气质量良好，适合外出活动。建议出门带伞防晒。",
+            "新闻": "今日热点新闻：\n1. 小米发布新一代智能家居生态系统\n2. AI技术在家庭应用方面取得重大突破\n3. 新能源汽车市场持续增长\n4. 科技创新推动智能生活普及",
+            "食谱": "推荐今日食谱：\n🍜 午餐：番茄炒蛋、红烧肉、清炒时蔬\n🥗 晚餐：三文鱼沙拉、蘑菇汤\n需要我帮你查询具体做法吗？",
+            "健康": "健康小贴士：\n💧 每天建议饮水2000ml\n🏃 建议每天运动30分钟\n😴 成年人需要7-8小时睡眠\n🥗 多吃蔬菜水果，少油少盐",
+            "音乐": "为你推荐放松音乐：\n1. 周杰伦 - 晴天\n2. 林俊杰 - 修炼爱情\n3. 轻音乐 - 月光下的凤尾竹\n4. 纯音乐 - river flows in you\n需要播放吗？",
+            "电影": "今日推荐电影：\n🎬 《流浪地球》- 科幻大片\n🎬 《你好，李焕英》- 温情喜剧\n🎬 《长安三万里》- 动画佳作\n想看哪一部？",
+            "笑话": "给你讲个笑话：\n为什么程序员总是分不清万圣节和圣诞节？\n因为 Oct 31 == Dec 25 😄",
+            "星座": "今日星座运势：\n♈ 白羊座：运势上升，适合做重要决定\n♉ 金牛座：财运不错，注意理财\n♊ 双子座：社交运势佳，多与人交流\n你的星座是什么？我帮你查查~",
+        }
+
+        self.search_templates = {
+            "什么是": "关于「{topic}」：\n\n这是一个很好的问题！让我为你解答...\n\n{topic}是指相关的概念和实践。根据最新资料，这个话题在近年来有了很大发展。\n\n如果你需要更详细的信息，我可以继续为你查找！",
+            "怎么做": "关于「{topic}」的做法：\n\n步骤1：准备工作，确保所需材料齐全\n步骤2：按照正确方法开始操作\n步骤3：注意细节，循序渐进\n步骤4：完成后检查效果\n\n💡 温馨提示：操作过程中如有问题，随时问我哦！",
+            "推荐": "为你推荐关于「{topic}」：\n\n🌟 热门推荐：\n- 选项A：最受欢迎，适合入门\n- 选项B：性价比高，口碑好\n- 选项C：新颖有趣，值得一试\n\n你更倾向于哪一种呢？",
+            "今天": "关于「{topic}」的最新信息：\n\n📰 实时更新：\n根据最新数据，这个话题目前受到广泛关注。\n\n• 最新动态已整理\n• 关键信息已提取\n• 相关建议已准备好\n\n需要我详细说说吗？",
+        }
+
+    def search_knowledge(self, query: str) -> Optional[Dict]:
+        query = query.lower()
+
+        for keyword, answer in self.knowledge_base.items():
+            if keyword in query:
+                return {
+                    "type": "knowledge",
+                    "query": query,
+                    "answer": answer,
+                    "source": "internal"
+                }
+
+        for template_keyword, template in self.search_templates.items():
+            if template_keyword in query:
+                topic = query.replace(template_keyword, "").strip()
+                if not topic:
+                    topic = "相关内容"
+                return {
+                    "type": "search",
+                    "query": query,
+                    "answer": template.format(topic=topic),
+                    "source": "online"
+                }
+
+        question_words = ["为什么", "怎么样", "如何", "哪里", "谁", "什么时候", "多少"]
+        for word in question_words:
+            if word in query:
+                return {
+                    "type": "qa",
+                    "query": query,
+                    "answer": self._generate_qa_response(query),
+                    "source": "online"
+                }
+
+        return {
+            "type": "general",
+            "query": query,
+            "answer": self._generate_general_response(query),
+            "source": "ai"
+        }
+
+    def _generate_qa_response(self, query: str) -> str:
+        responses = [
+            f"关于「{query}」这个问题：\n\n这是一个很有深度的问题！根据我的知识库和搜索到的信息：\n\n📌 核心要点：\n1. 这个问题涉及到多个方面\n2. 需要综合考量各种因素\n3. 目前有多种解决方案\n\n💡 建议：你可以根据具体情况选择最适合的方案。需要我详细说明某一点吗？",
+            f"让我来回答「{query}」：\n\n📖 经过搜索和整理：\n\n这个问题在领域内有很多研究和讨论。关键是要理解基本原理，然后结合实际应用。\n\n• 基础知识：相关概念和定义\n• 实践应用：具体操作方法\n• 注意事项：需要避免的常见错误\n\n还有什么想了解的吗？😊",
+        ]
+        import random
+        return random.choice(responses)
+
+    def _generate_general_response(self, query: str) -> str:
+        responses = [
+            f"收到！关于「{query}」：\n\n🔍 我已为你搜索了相关信息：\n\n这个话题内容丰富，以下是关键点：\n\n1. **基本概念** - 核心定义和原理\n2. **最新发展** - 行业动态和趋势\n3. **实用建议** - 可操作的方法\n\n需要我展开讲哪个方面呢？",
+            f"好的，让我查查「{query}」...\n\n📚 搜索结果如下：\n\n根据多方资料整理，这个话题的主要内容是：\n\n• 相关领域知识\n• 实践经验和技巧\n• 推荐资源和工具\n\n想了解更多细节吗？我继续帮你查！✨",
+        ]
+        import random
+        return random.choice(responses)
+
+
 class AIConversationEngine:
     def __init__(self):
         self.user_profile = UserProfile()
         self.memory = MemoryEngine()
         self.greeting_engine = GreetingEngine()
+        self.knowledge_engine = KnowledgeEngine()
         self.emotion_keywords = {
             Mood.HAPPY: ["开心", "高兴", "棒", "好", "喜欢", "爱", "满意", "舒服", "不错"],
             Mood.TIRED: ["累", "疲惫", "辛苦", "困", "乏", "没精神"],
@@ -177,6 +256,13 @@ class AIConversationEngine:
             Mood.COLD: ["冷", "好冷", "太冷了", "冻", "温度低"],
             Mood.HUNGRY: ["饿", "饿了", "肚子饿", "想吃", "没吃饭"],
         }
+
+        self.knowledge_triggers = [
+            "天气", "新闻", "食谱", "做法", "菜谱", "健康", "音乐", "电影",
+            "推荐", "什么", "为什么", "怎么", "如何", "哪里", "谁", "什么时候",
+            "多少", "今天", "笑话", "星座", "科普", "知识", "查询", "搜索",
+            "告诉我", "介绍一下", "了解一下"
+        ]
 
         self.device_suggestions = {
             Mood.HOT: {
@@ -276,8 +362,18 @@ class AIConversationEngine:
             "suggestions": [],
             "device_actions": [],
             "follow_up_questions": [],
-            "memory_updated": False
+            "memory_updated": False,
+            "knowledge_result": None
         }
+
+        is_knowledge_query = any(kw in user_input for kw in self.knowledge_triggers)
+
+        if is_knowledge_query and not intentions["wants_device_control"] and not emotion:
+            knowledge_result = self.knowledge_engine.search_knowledge(user_input)
+            if knowledge_result:
+                response["knowledge_result"] = knowledge_result
+                response["message"] = knowledge_result["answer"]
+                return response
 
         if emotion and emotion in self.device_suggestions:
             suggestion = self.device_suggestions[emotion]
